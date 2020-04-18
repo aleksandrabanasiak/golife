@@ -1,20 +1,22 @@
 package main
 
 import (
-	"fmt"
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
 	"github.com/faiface/pixel/pixelgl"
 	"golang.org/x/image/colornames"
 	"image/color"
+	"math"
 	"math/rand"
 	"time"
 )
 
+const height, width = 400, 400
+
 func run() {
 	cfg := pixelgl.WindowConfig{
 		Title:  "Wziuuum",
-		Bounds: pixel.R(0, 0, 400, 400),
+		Bounds: pixel.R(0, 0, height, width),
 		VSync:  true,
 	}
 	win, err := pixelgl.NewWindow(cfg)
@@ -28,15 +30,26 @@ func run() {
 
 	for !win.Closed() {
 		if win.JustPressed(pixelgl.MouseButtonLeft) {
-			fmt.Print(win.MousePosition())
+			grid.toggleCell(win.MousePosition(), win)
 		}
 		win.Update()
 	}
 }
 
+func (g grid) toggleCell(vec pixel.Vec, win *pixelgl.Window) {
+	x := int64(math.Floor(vec.X / 20))
+	y := int64(math.Floor(vec.Y / 20))
+
+	g[x][y].alive = !g[x][y].alive
+	g[x][y].drawCell(win)
+}
+
 func (c cell) drawCell(win *pixelgl.Window) {
 	imd := imdraw.New(nil)
-	imd.Color = randomColor()
+	imd.Color = colornames.Skyblue
+	if c.alive {
+		imd.Color = randomColor()
+	}
 	imd.Push(pixel.V(c.x, c.y))
 	imd.Push(pixel.V(c.x+20, c.y+20))
 	imd.Rectangle(0)
@@ -47,9 +60,7 @@ func (c cell) drawCell(win *pixelgl.Window) {
 func (g grid) drawGrid(win *pixelgl.Window) {
 	for row := range g {
 		for col := range g[row] {
-			if !g[row][col].alive {
-				g[row][col].drawCell(win)
-			}
+			g[row][col].drawCell(win)
 		}
 	}
 }
